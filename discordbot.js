@@ -40,7 +40,8 @@ client.on("messageCreate", async function (message) {
             ],
         });
         const generatedText = response.data.choices[0].message.content
-        return message.reply(generatedText);
+        // return message.reply(generatedText);
+        return message.channel.send(generatedText); // Send a reply to the same channel where the original message was sent to.
     } catch (error) {
         if (error.response) {
           console.log(error.response.status);
