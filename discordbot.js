@@ -2,13 +2,18 @@
 require('dotenv').config();
 
 // Discord.js versions ^13.0 require us to explicitly define client intents
-const { Client, GatewayIntentBits } = require('discord.js');
+const { Client, GatewayIntentBits, Partials } = require('discord.js');
 const client = new Client({ 
     intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.DirectMessages,
         GatewayIntentBits.MessageContent,
-    ] });
+    ],
+    partials: [
+        Partials.Channel,
+        Partials.Message
+    ]});
 
 client.on('ready', () => {
  console.log(`Logged in as ${client.user.tag}!`);
@@ -17,44 +22,96 @@ client.on('ready', () => {
 const { Configuration, OpenAIApi } = require('openai');
 const configuration = new Configuration({
     apiKey: process.env.OPENAI_API_KEY,
-  });
+});
 const openai = new OpenAIApi(configuration);
-
 
 client.on("messageCreate", async function (message) {
     if (message.author.bot) return;
-    const prefix  = "/gpt"
-    if (!message.content.startsWith("/gpt")) return;
-    /*return message.reply(`${message.content}`);*/
+    const prefix  = "/gpt";
+    if (!message.content.startsWith(prefix)) return;
 
     prompt = message.content.slice(prefix.length)
 
     const userQuery = prompt;
     console.log("prompt: ", userQuery);
-    try {
-        const response = await openai.createChatCompletion({
-            model:"gpt-3.5-turbo",
-            messages: [
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": userQuery}
-            ],
-        });
+    prompt = message.content.slice(prefix.length)
+
+    openai.createChatCompletion({
+        model:"gpt-3.5-turbo",
+        messages: [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": userQuery}
+        ],
+    })
+    .then(response => {
         const generatedText = response.data.choices[0].message.content
-        // return message.reply(generatedText);
-        return message.channel.send(generatedText); // Send a reply to the same channel where the original message was sent to.
-    } catch (error) {
-        if (error.response) {
-          console.log(error.response.status);
-          console.log(error.response.data);
+        // Check if the generated text is longer than the Discord message limit
+        const discordMessageLimit = 1999;
+        if (generatedText.length > discordMessageLimit) {
+            // If it is, split it into multiple messages and send them one by one
+            let start = 0;
+            while (start < generatedText.length) {
+
+                let end = Math.min(start + discordMessageLimit, generatedText.length);
+                // If the end is not at the end of the string, backtrack to the last paragraph end
+                if (end != generatedText.length) {
+                    let lastNewline = generatedText.lastIndexOf('\n', end);
+                    if (lastNewline > start) {
+                        end = lastNewline + 1; // Include the newline character in the chunk
+                    } else { // If there's no newline (single paragraph longer than limit), split by sentence
+                        let lastPeriod = generatedText.lastIndexOf('.', end);
+                        let lastQuestion = generatedText.lastIndexOf('?', end);
+                        let lastExclamation = generatedText.lastIndexOf('!', end);
+                        let lastEnd = Math.max(lastPeriod, lastQuestion, lastExclamation);
+                        if (lastEnd > start) {
+                            end = lastEnd + 1; // Include the period in the chunk
+                        } else {// else, we have a single sentence longer than limit, we have to truncate
+                            let lastComma = generatedText.lastIndexOf(',', end);
+                            if (lastComma > start) {
+                                end = lastComma + 1;
+                            } else {
+                                let lastSpace = generatedText.lastIndexOf(' ', end);
+                                if (lastSpace > start) {
+                                    end = lastSpace;
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                let chunk = generatedText.substring(start, end);
+
+                message.channel.send(chunk)
+                .catch(error => {
+                    console.log(error.message);
+                    let errorMessage = "Sorry, something went wrong. I am unable to process your query.";
+                    if (error.message && error.code) {
+                        errorMessage += `\nDetails: ${error.message} [${error.code}].`;
+                    }
+                    return message.reply(errorMessage);
+                }
+                );
+
+                start += chunk.length;
+            }
         } else {
-          console.log(error.message);
+            // If it isn't, just send the message as is
+            return message.reply(generatedText)
+            .catch(error => {
+                console.log(error.message);
+                let errorMessage = "Sorry, something went wrong. I am unable to process your query.";
+                if (error.message && error.code) {
+                    errorMessage += `\nDetails: ${error.message} [${error.code}].`;
+                }
+                return message.reply(errorMessage);
+            }
+            );
         }
-        return message.reply(
-        "Sorry, something went wrong. I am unable to process your query."
-        );
-    }
-
-
+    })
+    .catch(error => {
+        console.log(error.message);
+        return message.reply("Sorry, something in GPT API went wrong. I am unable to process your query.");
+    });
 });
 
 // Log In our bot

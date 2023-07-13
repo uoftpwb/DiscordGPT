@@ -17,13 +17,15 @@ client.on('ready', () => {
 const { Configuration, OpenAIApi } = require('openai');
 const configuration = new Configuration({
     apiKey: process.env.OPENAI_API_KEY,
-});
+  });
 const openai = new OpenAIApi(configuration);
+
 
 client.on("messageCreate", async function (message) {
     if (message.author.bot) return;
-    const prefix  = "/gpt";
-    if (!message.content.startsWith(prefix)) return;
+    const prefix  = "/gpt"
+    if (!message.content.startsWith("/gpt")) return;
+    /*return message.reply(`${message.content}`);*/
 
     prompt = message.content.slice(prefix.length)
 
@@ -37,22 +39,9 @@ client.on("messageCreate", async function (message) {
                 {"role": "user", "content": userQuery}
             ],
         });
-        const generatedText = response.data.choices[0].message.content;
-
-        // Check if the generated text is longer than the Discord message limit
-        const discordMessageLimit = 2000;
-        if (generatedText.length > discordMessageLimit) {
-            // If it is, split it into multiple messages and send them one by one
-            let start = 0;
-            while (start < generatedText.length) {
-                let chunk = generatedText.substring(start, Math.min(start + discordMessageLimit, generatedText.length));
-                await message.channel.send(chunk);
-                start += discordMessageLimit;
-            }
-        } else {
-            // If it isn't, just send the message as is
-            return message.channel.send(generatedText);
-        }
+        const generatedText = response.data.choices[0].message.content
+        // return message.reply(generatedText);
+        return message.channel.send(generatedText); // Send a reply to the same channel where the original message was sent to.
     } catch (error) {
         if (error.response) {
           console.log(error.response.status);
@@ -64,6 +53,8 @@ client.on("messageCreate", async function (message) {
         "Sorry, something went wrong. I am unable to process your query."
         );
     }
+
+
 });
 
 // Log In our bot
