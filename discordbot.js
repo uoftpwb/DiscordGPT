@@ -44,7 +44,19 @@ client.on("messageCreate", async function (message) {
         ],
     })
     .then(response => {
-        const generatedText = response.data.choices[0].message.content
+        //calculating the cost
+        const promptTokens = response.data.usage.prompt_tokens
+        const completionTokens = response.data.usage.completion_tokens
+        const cost = {
+            "gpt3p5":{
+                "promptTokens" : 0.0015/1000,
+                "completionTokens" : 0.0020/1000
+            }
+        }
+        const totalCost = promptTokens * cost.gpt3p5.promptTokens + completionTokens * cost.gpt3p5.completionTokens
+        console.log(`cost: USD ${totalCost.toFixed(5)}`)
+
+        let generatedText = `(cost: USD ${totalCost.toFixed(5)})\n` + response.data.choices[0].message.content
         // Check if the generated text is longer than the Discord message limit
         const discordMessageLimit = 1999;
         if (generatedText.length > discordMessageLimit) {
