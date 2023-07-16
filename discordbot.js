@@ -30,11 +30,8 @@ client.on("messageCreate", async function (message) {
     const prefix  = "/gpt";
     if (!message.content.startsWith(prefix)) return;
 
-    prompt = message.content.slice(prefix.length)
-
-    const userQuery = prompt;
+    const userQuery = message.content.slice(prefix.length);
     console.log("prompt: ", userQuery);
-    prompt = message.content.slice(prefix.length)
 
     openai.createChatCompletion({
         model:"gpt-3.5-turbo",
