@@ -4,6 +4,10 @@ require('dotenv').config();
 //import the "ask" function from the "gpt.js" file
 const { ask } = require("./gpt.js"); 
 
+// import the logProcess functions
+const { updateUserInfo, logMessage } = require('./logProcess');
+
+
 // Discord.js versions ^13.0 require us to explicitly define client intents
 const { Client, GatewayIntentBits, Partials } = require('discord.js');
 const client = new Client({ 
@@ -26,6 +30,10 @@ client.on("messageCreate", async function (message) {
     if (message.author.bot) return;
     const prefix  = "/gpt";
     if (!message.content.startsWith(prefix)) return;
+
+    // Log the message and update the user info
+    updateUserInfo(message);
+    logMessage(message);
 
     const userQuery = message.content.slice(prefix.length);
     console.log("prompt: ", userQuery);
