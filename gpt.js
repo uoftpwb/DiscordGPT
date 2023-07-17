@@ -12,13 +12,13 @@ const cost = {
 }
 
 
-async function ask(userQuery) {
+async function ask({systemRole , userContent} = {}) {
 
     return openai.createChatCompletion({
         model:"gpt-3.5-turbo",
         messages: [
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": userQuery}
+            {"role": "system", "content": systemRole},
+            {"role": "user", "content": userContent}
         ],
     })
     .then(response => {

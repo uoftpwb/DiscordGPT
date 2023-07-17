@@ -7,7 +7,6 @@ const { ask } = require("./gpt.js");
 // import the logProcess functions
 const { updateUserInfo, logMessage } = require('./logProcess');
 
-
 // Discord.js versions ^13.0 require us to explicitly define client intents
 const { Client, GatewayIntentBits, Partials } = require('discord.js');
 const client = new Client({ 
@@ -26,23 +25,65 @@ client.on('ready', () => {
  console.log(`Logged in as ${client.user.tag}!`);
 });
 
+let gptRole = "You are a helpful assistant.";
+
 client.on("messageCreate", async function (message) {
     if (message.author.bot) return;
-    const prefix  = "/gpt";
+    
+    const prefix  = "!";
     if (!message.content.startsWith(prefix)) return;
 
     // Log the message and update the user info
     updateUserInfo(message);
     logMessage(message);
-
-    const userQuery = message.content.slice(prefix.length);
+    
+    const command = message.content.split(" ", 2)[0];
+    const userQuery = message.content.slice(command.length).trim();
+    console.log("------------------------");
+    console.log("command: ", command);
     console.log("prompt: ", userQuery);
 
-    ask(userQuery)
+    switch (command){
+      
+      case "!ask":
+            if (!userQuery) {
+                message.reply(`Current Role of GPT: ${gptRole}`);
+                return;
+            } else {
+                return handleAskGpt(message, userQuery);
+            }
+            
+      case "!gptRole":
+            if (!userQuery) {
+                gptRole = "You are a helpful assistant.";
+                console.log(`Role of GPT has been reset to: ${gptRole}`);
+                message.reply(`Role of GPT has been reset to: ${gptRole}`);
+                return;
+            } else {
+                gptRole = userQuery;
+                console.log(`Role of GPT has been updated to: ${gptRole}`);
+                message.reply(`Role of GPT has been updated to: ${gptRole}`);
+                return;
+            }
+      
+      case "!help":
+        return message.reply("Here's how to use my commands:\n\n" +
+                             "**!ask [question]**: Ask me a question and I'll respond as best as I can.\n\n" +
+                             `**!gptRole [role]**: Change my role. If you don't specify a role, it will be reset to the default: "${gptRole}"\n\n` +
+                             "**!help**: Show this help message.");
+      
+      default:
+            return;
+    }
+});
+
+function handleAskGpt(message, question){
+    if (!question) return;
+    console.log(`Asking GPT with role: ${gptRole}`);
+    
+    ask({systemRole: gptRole, userContent: question})
     .then(generatedText => {
-        const discordMessageLimit = 1999;
-        console.log(generatedText)
-        let chunks = splitMessage(generatedText, discordMessageLimit);
+        let chunks = splitMessage(text = generatedText);
 
         for (let chunk of chunks) {
             message.channel.send(chunk)
@@ -56,10 +97,9 @@ client.on("messageCreate", async function (message) {
             });
         }
     });
- 
-});
+}
 
-function splitMessage(text, limit) {
+function splitMessage(text, limit = 1999) {
     let chunks = [];
     let start = 0;
 
