@@ -5,10 +5,10 @@ require('dotenv').config();
 const { ask } = require("./gpt.js"); 
 
 // import the logProcess functions
-const { updateUserInfo, logMessage } = require('./logProcess');
+const { updateUserInfo, logMessage,convertMessageFormat, message2messagesInThread } = require('./logProcess');
 
 // Discord.js versions ^13.0 require us to explicitly define client intents
-const { Client, GatewayIntentBits, Partials } = require('discord.js');
+const { Client, GatewayIntentBits, Partials, ThreadChannel } = require('discord.js');
 const client = new Client({ 
     intents: [
         GatewayIntentBits.Guilds,
@@ -28,6 +28,17 @@ client.on('ready', () => {
 let gptRole = "You are a helpful assistant.";
 
 client.on("messageCreate", async function (message) {
+
+    if (message.channel instanceof ThreadChannel) {
+        console.log("A thread message is coming!");
+        const messagesInThread = await message2messagesInThread(message, limit = 10);
+        const convertedMessages = convertMessageFormat(messagesInThread);
+        console.log(convertedMessages);
+        /* convertedMessages is properly formatted for GPT API call,
+        check https://github.com/openai/openai-cookbook/blob/main/examples/How_to_format_inputs_to_ChatGPT_models.ipynb
+        for how to use it. */
+    };
+
     if (message.author.bot) return;
     
     const prefix  = "!";
