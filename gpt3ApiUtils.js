@@ -11,15 +11,19 @@ const cost = {
     }
 }
 
-
-async function ask({systemRole , userContent} = {}) {
+async function askGpt3({systemRole, userContent, previousMessages = null} = {}) {
+    let messages = [
+        {"role": "system", "content": systemRole},
+        {"role": "user", "content": userContent}
+    ];
+    if (previousMessages) {
+        messages = previousMessages;
+        // console.log("Previous messages: ", messages);
+    }
 
     return openai.createChatCompletion({
         model:"gpt-3.5-turbo",
-        messages: [
-            {"role": "system", "content": systemRole},
-            {"role": "user", "content": userContent}
-        ],
+        messages: messages,
     })
     .then(response => {
         //calculating the cost
@@ -35,7 +39,8 @@ async function ask({systemRole , userContent} = {}) {
     })
 
 }
-//Export the "ask" function
+
+// Export the "askGpt3" function
 module.exports = {
-    ask,
+    askGpt3,
 };
