@@ -1,4 +1,4 @@
-const { askGpt3 } = require("./gpt3ApiUtils.js");
+const { askGpt } = require("./gptApiUtils.js");
 
 function handleAskGpt(message, question, gptRoleDescription, previousMessages = null){
     if (!question) return;
@@ -9,7 +9,7 @@ function handleAskGpt(message, question, gptRoleDescription, previousMessages = 
         gptInput.previousMessages = previousMessages;
     }
     
-    askGpt3(gptInput).then(generatedText => {
+    askGpt(gptInput).then(generatedText => {
         let chunks = splitMessage(text = generatedText);
 
         for (let chunk of chunks) {

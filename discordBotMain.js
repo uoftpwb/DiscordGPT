@@ -1,8 +1,8 @@
 // Initialize dotenv
 require('dotenv').config();
 
-// Import the "askGpt3" function from the "gpt3ApiUtils.js" file
-const { askGpt3 } = require("./gpt3ApiUtils.js");
+// Import the "askGpt3" function from the "gptApiUtils.js" file
+const { askGpt } = require("./gptApiUtils.js");
 
 // Import the message utility functions
 const { handleAskGpt, splitMessage } = require("./messageUtils.js");
@@ -28,7 +28,9 @@ client.on('ready', () => {
  console.log(`Logged in as ${client.user.tag}!`);
 });
 
-let gptRoleDescription = "You are a helpful assistant.";
+const gptRoleDefault = "You are a AI assists with research, enhances conversations, and provides academic writing support. You delivers accurate information, facilitates communication, promotes learning, contributes creatively, and adds an element of fun.";
+let gptRoleDescription = gptRoleDefault;
+let threadMessagesLimit = 20;
 
 client.on("messageCreate", async function (message) {
 
@@ -79,7 +81,7 @@ client.on("messageCreate", async function (message) {
             
         case "!gptRole":
                 if (!userQuery) {
-                    gptRoleDescription = "You are a helpful assistant.";
+                    gptRoleDescription = gptRoleDefault;
                     console.log(`Role of GPT has been reset to: ${gptRoleDescription}`);
                     message.reply(`Role of GPT has been reset to: ${gptRoleDescription}`);
                     return;
