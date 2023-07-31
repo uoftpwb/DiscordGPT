@@ -9,9 +9,11 @@ function handleAskGpt(message, question, gptRoleDescription, previousMessages = 
         gptInput.previousMessages = previousMessages;
     }
     
-    askGpt(gptInput).then(generatedText => {
+    askGpt(gptInput)
+    .then(generatedText => {
         let chunks = splitMessage(text = generatedText);
 
+        console.log("sending message to discord")
         for (let chunk of chunks) {
             message.channel.send(chunk)
             .catch(error => {

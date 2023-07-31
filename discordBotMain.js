@@ -28,7 +28,7 @@ client.on('ready', () => {
  console.log(`Logged in as ${client.user.tag}!`);
 });
 
-const gptRoleDefault = "You are a AI assists with research, enhances conversations, and provides academic writing support. You delivers accurate information, facilitates communication, promotes learning, contributes creatively, and adds an element of fun.";
+const gptRoleDefault = "You are an AI assists with research, enhances conversations, and provides academic writing support. You delivers accurate information, facilitates communication, promotes learning, contributes creatively, and adds an element of fun.";
 let gptRoleDescription = gptRoleDefault;
 let threadMessagesLimit = 20;
 
@@ -71,7 +71,7 @@ client.on("messageCreate", async function (message) {
                     if (message.channel instanceof ThreadChannel) {
                         console.log("A thread message is coming!");
                         const messagesInThread = await getThreadMessages(message, threadMessagesLimit);
-                        const previousMessages = formatMessages(messagesInThread);
+                        const previousMessages = formatMessages(messagesInThread, gptRoleDescription);
                         console.log(previousMessages);
                         return handleAskGpt(message, userQuery, gptRoleDescription, previousMessages);
                     } else {

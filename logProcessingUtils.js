@@ -1,7 +1,7 @@
-function formatMessages(messageObject) {
+function formatMessages(messageObject, gptSystemRole) {
     // Initial system message
     let messages = [
-        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "system", "content": gptSystemRole},
     ];
     
     // Convert the Collection to an array and reverse it
@@ -28,6 +28,7 @@ async function getThreadMessages(message, limit = 10) {
     
     // fetch messages from the thread, limit set to the parameter limit, and disable cache
     const messagesInThread = await thread.messages.fetch({ limit, cache: false });
+    //console.log(messagesInThread)
     
     return messagesInThread;
 }

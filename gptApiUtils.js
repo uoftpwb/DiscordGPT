@@ -33,22 +33,24 @@ async function askGpt({systemRole, userContent, model = defaultModel, previousMe
     ];
     if (previousMessages) {
         messages = previousMessages;
-        // console.log("Previous messages: ", messages);
+         console.log("Previous messages: ", messages);
     }
 
+    console.log("sending prompt to gpt")
+    
     return openai.createChatCompletion({
         model: model,
         messages: messages,
     })
     .then(response => {
-        let costLine;
+        let costLine = "";
         //calculating the cost
         if (previousMessages) {
             costLine = "";
         } else {
             costLine = costCal(response);
         }
-        return (costLine + `\n` + response.data.choices[0].message.content);
+        return (response.data.choices[0].message.content + `\n` + costLine);
     })
     .catch(error => {
         console.log(error.message);
