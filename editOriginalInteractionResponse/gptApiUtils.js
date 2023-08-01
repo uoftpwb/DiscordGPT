@@ -1,7 +1,9 @@
 const { Configuration, OpenAIApi } = require('openai');
+
 const configuration = new Configuration({
     apiKey: process.env.OPENAI_API_KEY,
 });
+
 const openai = new OpenAIApi(configuration);
 
 const cost = {
@@ -15,13 +17,13 @@ const cost = {
     }
 }
 
-//function for calculating the cost
-function costCal(response, model) {
-    const promptTokensCost = response.data.usage.prompt_tokens * cost[model].promptTokens;
-    const completionTokensCost = response.data.usage.completion_tokens * cost[model].completionTokens;
+function calculateCost(response, model) {
+    const { promptTokens, completionTokens } = cost[model];
+    const promptTokensCost = response.data.usage.prompt_tokens * promptTokens;
+    const completionTokensCost = response.data.usage.completion_tokens * completionTokens;
     const totalCost = promptTokensCost + completionTokensCost;
-    const costLine = `(cost: USD ${totalCost.toFixed(5)})`;
-    return (costLine);
+
+    return `(cost: USD ${totalCost.toFixed(5)})`;
 }
 
 async function askGpt(systemRole, userContent, model, previousMessages = null) {
@@ -29,35 +31,28 @@ async function askGpt(systemRole, userContent, model, previousMessages = null) {
         { "role": "system", "content": systemRole },
         { "role": "user", "content": userContent }
     ];
+
     if (previousMessages) {
         messages = previousMessages;
         console.log("Previous messages: ", messages);
     }
 
-    console.log("sending prompt to gpt")
+    console.log("Sending prompt to GP")
 
-    return openai.createChatCompletion({
-        model: model,
-        messages: messages,
-    })
-        .then(response => {
-            let costLine = "";
-            //calculating the cost
-            if (previousMessages) {
-                costLine = "";
-            } else {
-                costLine = costCal(response, model);
-            }
-            return (response.data.choices[0].message.content + `\n` + costLine);
-        })
-        .catch(error => {
-            console.log(error.message);
-            return ("Sorry, something in GPT API went wrong. I am unable to process your query.");
-        })
+    try {
+        const response = await openai.createChatCompletion({
+            model: model,
+            messages: messages,
+        });
 
+        const costLine = previousMessages ? "" : calculateCost(response, model);
+        return `${response.data.choices[0].message.content}\n${costLine}`;
+    } catch (error) {
+        console.log(error.message);
+        return "Sorry, something in GPT API went wrong. I am unable to process your query.";
+    }
 }
 
-// Export the "askGpt3" function
 module.exports = {
     askGpt,
 };
