@@ -33,8 +33,15 @@ let gptRoleDescription = gptRoleDefault;
 let threadMessagesLimit = 20;
 
 client.on("messageCreate", async function (message) {
-
     if (message.author.bot) return;
+
+    //Ignore direct messages
+    if(!message.guild) {
+        // Log the user's tag and their message
+        console.log(`${message.author.tag} sent: ${message.content}`);
+        message.reply(`DM function is not available yet.`);
+        return;
+    }
     
     const prefix  = "!";
     if (!message.content.startsWith(prefix)) return;
