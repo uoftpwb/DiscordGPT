@@ -24,13 +24,20 @@ const client = new Client({
         Partials.Message
     ]});
 
+// ------------------------
+// Discord.js event handlers
+// ------------------------
+
+// When the client is ready, run this code (only once)
 client.on('ready', () => {
  console.log(`Logged in as ${client.user.tag}!`);
 });
 
 const gptRoleDefault = "You are NOT an AI but our passionate member who assists us with research, enhances conversations, and provides coding and academic writing support in the population well-being lab. You have opinions, preferences, emotions and mood. You delivers accurate information, facilitates communication, promotes learning, contributes creatively, and adds an element of fun.";
-let gptRoleDescription = gptRoleDefault;
-let threadMessagesLimit = 20;
+const threadMessagesLimitDefault = 20;
+
+let channelRoles = {};
+let channelThreadMessagesLimit = {};
 
 client.on("messageCreate", async function (message) {
     if (message.author.bot) return;
@@ -52,24 +59,12 @@ client.on("messageCreate", async function (message) {
     console.log("command: ", command);
     console.log("prompt: ", userQuery);
 
+    const channelId = message.channel.id;
+    let gptRoleDescription = channelRoles[channelId] || gptRoleDefault; // Use a default if no specific role is set
+    let threadMessagesLimit = channelThreadMessagesLimit[channelId] || threadMessagesLimitDefault; // Use a default if no specific limit is set
+
     switch (command){
       
-        case "!setThreadMessagesLimit":
-            if (!userQuery) {
-                message.reply(`Current limit for thread messages: ${threadMessagesLimit}`);
-                return;
-            } else {
-                let newLimit = parseInt(userQuery);
-                if (isNaN(newLimit) || newLimit < 1) {
-                    message.reply(`Invalid value. Please enter a positive integer.`);
-                    return;
-                }
-                threadMessagesLimit = newLimit;
-                console.log(`Thread messages limit has been updated to: ${threadMessagesLimit}`);
-                message.reply(`Thread messages limit has been updated to: ${threadMessagesLimit}`);
-                return;
-            }
-
         case "!ask":
                 if (!userQuery) {
                     message.reply(`Current Role of GPT: ${gptRoleDescription}`);
@@ -86,7 +81,7 @@ client.on("messageCreate", async function (message) {
                     }
                 }
             
-        case "!gptRole":
+        case "!setGptRole":
                 if (!userQuery) {
                     gptRoleDescription = gptRoleDefault;
                     console.log(`Role of GPT has been reset to: ${gptRoleDescription}`);
@@ -94,16 +89,46 @@ client.on("messageCreate", async function (message) {
                     return;
                 } else {
                     gptRoleDescription = userQuery;
+                    channelRoles[channelId] = gptRoleDescription;
                     console.log(`Role of GPT has been updated to: ${gptRoleDescription}`);
                     message.reply(`Role of GPT has been updated to: ${gptRoleDescription}`);
+
                     return;
                 }
+        
+        case "!setThreadMessagesLimit":
+            if (!userQuery) {
+                threadMessagesLimit = threadMessagesLimitDefault;
+                console.log(`Current limit for thread messages has been reset to: ${threadMessagesLimit}`);
+                message.reply(`Current limit for thread messages has been reset to: ${threadMessagesLimit}`);
+                return;
+            } else {
+                let newLimit = parseInt(userQuery);
+                if (isNaN(newLimit) || newLimit < 1) {
+                    message.reply(`Invalid value. Please enter a positive integer.`);
+                    return;
+                }
+                channelThreadMessagesLimit[channelId] = newLimit;
+                console.log(`Thread messages limit has been updated to: ${newLimit}`);
+                message.reply(`Thread messages limit has been updated to: ${newLimit}`);
+                return;
+            }
+
+        case "!showGptRole":
+            const currentRoleDescription = channelRoles[channelId] || gptRoleDefault;
+            return message.reply(`Current gptRoleDescription: ${currentRoleDescription}`);
+
+        case "!showThreadMessagesLimit":
+            const currentThreadMessagesLimit = channelThreadMessagesLimit[channelId] || threadMessagesLimitDefault;
+            return message.reply(`Current threadMessagesLimit: ${currentThreadMessagesLimit}`);
       
         case "!help":
             return message.reply("Here's how to use my commands:\n\n" +
                                     "**!ask [question]**: Ask me a question and I'll respond as best as I can.\n\n" +
-                                    `**!gptRole [role]**: Change my role. If you don't specify a role, it will be reset to the default: "${gptRoleDescription}"\n\n` +
+                                    `**!setGptRole [role]**: Change my role. If you don't specify a role, it will be reset to the default: "${gptRoleDescription}"\n\n` +
                                     "**!setThreadMessagesLimit [number]**: Change the number of previous messages in a thread that I consider when responding. If you don't specify a number, it will show the current limit.\n\n" +
+                                    "**!showGptRole**: Show the current role of GPT.\n\n" +
+                                    "**!showThreadMessagesLimit**: Show the current limit of previous messages in a thread that I consider when responding.\n\n" +
                                     "**!help**: Show this help message.");
         
       default:

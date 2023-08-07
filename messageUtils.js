@@ -12,18 +12,23 @@ function handleAskGpt(message, question, gptRoleDescription, previousMessages = 
     askGpt(gptInput)
     .then(generatedText => {
         let chunks = splitMessage(text = generatedText);
+        let fistChunk = chunks[0];
+        let restChunks = chunks.slice(1);
 
         console.log("sending message to discord")
-        for (let chunk of chunks) {
-            message.channel.send(chunk)
-            .catch(error => {
-                console.log(error.message);
-                let errorMessage = "Sorry, something went wrong. I am unable to process your query.";
-                if (error.message && error.code) {
-                    errorMessage += `\nDetails: ${error.message} [${error.code}].`;
-                }
-                return message.reply(errorMessage);
-            });
+        
+        message.reply(fistChunk)
+        .catch(error => {
+            console.log(error.message);
+            let errorMessage = "Sorry, something went wrong. I am unable to process your query.";
+            if (error.message && error.code) {
+                errorMessage += `\nDetails: ${error.message} [${error.code}].`;
+            }
+            return message.reply(errorMessage);
+        });
+        
+        if (restChunks.length > 0) {
+            message.channel.send(restChunks)
         }
     });
 }
